@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>US Liquidity & Carry Trade Dashboard (v10)</title>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --border-color: #2a2e39;
+            --text-color: #888;
+            --header-height: 40px;
+            --accent-active: #2962ff;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden;
+            /* 禁止捲動 */
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 頂部控制列 */
+        .top-bar {
+            height: var(--header-height);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            background: #131722;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .title-group h1 {
+            margin: 0;
+            font-size: 16px;
+            color: #eee;
+            font-weight: 600;
+        }
+
+        /* 時間軸按鈕 */
+        .time-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .time-btn {
+            background: #2a2e39;
+            border: 1px solid #363a45;
+            color: #ccc;
+            padding: 4px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .time-btn:hover {
+            background: #363a45;
+            color: #fff;
+        }
+
+        .time-btn.active {
+            background: var(--accent-active);
+            border-color: var(--accent-active);
+            color: #fff;
+            font-weight: bold;
+        }
+
+        /* 3x3 網格系統 */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            /* 改為 3 欄 */
+            grid-template-rows: repeat(4, 1fr);
+            /* Modified to 4 rows */
+            height: calc(100vh - var(--header-height));
+            width: 100%;
+            gap: 1px;
+            background-color: var(--border-color);
+        }
+
+        .chart-box {
+            background-color: #131722;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 浮動標籤 */
+        .chart-label {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #e0e0e0;
+            pointer-events: none;
+            border-left: 3px solid #555;
+        }
+
+        .tv-container {
+            flex-grow: 1;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="top-bar">
+        <div class="title-group">
+            <h1>Global Liquidity & Risk Matrix (3x3)</h1>
+        </div>
+        <div class="time-controls">
+            <button class="time-btn" onclick="syncCharts('1m')">1M</button>
+            <button class="time-btn" onclick="syncCharts('3m')">3M</button>
+            <button class="time-btn" onclick="syncCharts('6m')">6M</button>
+            <button class="time-btn" onclick="syncCharts('12m')">1Y</button>
+            <button class="time-btn active" onclick="syncCharts('60m')">5Y</button>
+            <button class="time-btn" onclick="syncCharts('ALL')">All</button>
+        </div>
+    </div>
+
+    <div class="grid-container">
+
+        <div class="chart-box">
+            <div class="chart-label" style="border-color:#2962ff">1. Net Liquidity (Fed-TGA-RRP)</div>
+            <div id="tv_netliq" class="tv-container"></div>
+        </div>
+        <div class="chart-box">
+            <div class="chart-label" style="border-color:#888">2. Reverse Repo (RRP)</div>
+            <div id="tv_rrp" class="tv-container"></div>
+        </div>
+        <div class="chart-box">
+            <div class="chart-label" style="border-color:#888">3. TGA (Treasury Account)</div>
+            <div id="tv_tga" class="tv-container"></div>
+        </div>
+
+        <div class="chart-box">
+            <div class="chart-label" style="border-color:#2962ff">4. SOFR (Overnight Rate)</div>
+            <div id="tv_sofr" class="tv-container"></div>
+        </div>
+        <div class="chart-box">
+            <div class="chart-label" style="border-color:#f7525f">5. Liquidity Stress Spread (SOFR-IORB)</div>
+            <div id="tv_stress" class="tv-container"></div>
+        </div>
+
+        <div class="chart-box">
+            <div class="chart-label" style="border-color:#d029ff">6. USD/JPY (Carry Trade)</div>
+            <div id="tv_usdjpy" class="tv-container"></div>
+        </div>
+
+        <div class="chart-box">
+            <div class="chart-label" style="border-color:#f7525f">7. US 10Y Yield (Rate)</div>
+            <div id="tv_us10y" class="tv-container"></div>
+        </div>
+        <div class="chart-box">
+            <div class="chart-label" style="border-color:#f7525f">8. US 30Y Yield (Rate)</div>
+            <div id="tv_us30y" class="tv-container"></div>
+        </div>
+
+        <div class="chart-box">
+            <div class="chart-label" style="border-color:#22ab94">9. USDC Market Cap</div>
+            <div id="tv_usdc" class="tv-container"></div>
+        </div>
+        <div class="chart-box">
+            <div class="chart-label" style="border-color:#f7525f">10. HY Spread (Junk)</div>
+            <div id="tv_hy" class="tv-container"></div>
+        </div>
+        <div class="chart-box">
+            <div class="chart-label" style="border-color:#b2b5be">11. Corp Spread (Inv Grade)</div>
+            <div id="tv_corp" class="tv-container"></div>
+        </div>
+
+        <div class="chart-box">
+            <div class="chart-label" style="border-color:#f7931a">12. BTC / USD</div>
+            <div id="tv_btc" class="tv-container"></div>
+        </div>
+
+
+
+    </div>
+
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+    <script type="text/javascript">
+
+        const chartConfigs = [
+            // Row 1
+            { id: 'tv_netliq', symbol: 'FRED:WALCL/1000-FRED:WTREGEN-FRED:RRPONTSYD', style: '2' },
+            { id: 'tv_rrp', symbol: 'FRED:RRPONTSYD', style: '3' },
+            { id: 'tv_tga', symbol: 'FRED:WTREGEN', style: '3' },
+
+            // Row 2
+            { id: 'tv_sofr', symbol: 'FRED:SOFR', style: '2' },
+            { id: 'tv_stress', symbol: 'FRED:SOFR-FRED:IORB', style: '2' },
+            { id: 'tv_usdjpy', symbol: 'FX:USDJPY', style: '2' }, // Carry Trade
+
+            // Row 3 (shifted)
+            { id: 'tv_us10y', symbol: 'FRED:DGS10', style: '2' },
+            { id: 'tv_us30y', symbol: 'FRED:DGS30', style: '2' },
+            { id: 'tv_usdc', symbol: 'CRYPTOCAP:USDC', style: '3' },
+
+            // Row 4 (shifted)
+            { id: 'tv_hy', symbol: 'FRED:BAMLH0A0HYM2', style: '2' },
+            { id: 'tv_corp', symbol: 'FRED:BAMLC0A0CM', style: '2' },
+            { id: 'tv_btc', symbol: 'COINBASE:BTCUSD', style: '1' }
+        ];
+
+        let currentRange = '60m';
+
+        function syncCharts(range) {
+            currentRange = range;
+
+            const btnMap = { '1m': 0, '3m': 1, '6m': 2, '12m': 3, '60m': 4, 'ALL': 5 };
+            const buttons = document.querySelectorAll('.time-btn');
+            buttons.forEach(b => b.classList.remove('active'));
+            if (buttons[btnMap[range]]) buttons[btnMap[range]].classList.add('active');
+
+            chartConfigs.forEach(config => {
+                document.getElementById(config.id).innerHTML = '';
+                new TradingView.widget({
+                    "autosize": true,
+                    "symbol": config.symbol,
+                    "interval": "D",
+                    "range": range,
+                    "timezone": "Asia/Taipei",
+                    "theme": "dark",
+                    "style": config.style,
+                    "locale": "zh_TW",
+                    "enable_publishing": false,
+                    "hide_top_toolbar": true,
+                    "hide_legend": true,
+                    "save_image": false,
+                    "container_id": config.id
+                });
+            });
+        }
+
+        window.onload = function () {
+            syncCharts('60m');
+        };
+
+    </script>
+
+</body>
+
+</html>
