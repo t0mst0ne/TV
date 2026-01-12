@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Institutional Risk Dashboard | 制度風險監控</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg-color: #0b0e11;
+      --card-bg: #161a1e;
+      --text-main: #eaecef;
+      --text-dim: #9aa4ad;
+      --accent-green: #2ebd85;
+      --accent-yellow: #f0b90b;
+      --accent-orange: #f39c12;
+      --accent-red: #f6465d;
+      --border-color: #2b2f36;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
+      background: var(--bg-color);
+      color: var(--text-main);
+      line-height: 1.5;
+    }
+
+    header {
+      padding: 30px 24px;
+      border-bottom: 1px solid var(--border-color);
+      background: linear-gradient(180deg, #161a1e 0%, #0b0e11 100%);
+    }
+
+    header h1 {
+      margin: 0 0 10px 0;
+      font-size: 28px;
+      letter-spacing: 1px;
+    }
+
+    .status-bar {
+      display: flex;
+      gap: 15px;
+      font-size: 13px;
+      margin-top: 10px;
+    }
+
+    .status-item {
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: #2b2f36;
+    }
+
+    section {
+      padding: 24px;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      font-size: 20px;
+      border-left: 4px solid var(--accent-yellow);
+      padding-left: 12px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+      gap: 24px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-header {
+      padding: 12px 16px;
+      background: #1e2329;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-header h3 {
+      margin: 0;
+      font-size: 15px;
+      color: var(--text-main);
+    }
+
+    .tv-container {
+      height: 380px;
+      /* 增加圖表高度 */
+      width: 100%;
+    }
+
+    .logic-box {
+      padding: 16px;
+      font-size: 13.5px;
+      background: #111417;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .logic-box b {
+      color: var(--accent-yellow);
+    }
+
+    .mnemonic {
+      margin-top: 10px;
+      padding: 8px;
+      background: rgba(240, 185, 11, 0.1);
+      border-radius: 4px;
+      font-style: italic;
+      color: var(--accent-yellow);
+    }
+
+    footer {
+      padding: 40px 24px;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 12px;
+    }
+
+    @media (max-width: 600px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>🏛️ 制度風險監控儀表板</h1>
+    <div class="status-bar">
+      <span class="status-item">核心：Fed 獨立性</span>
+      <span class="status-item">關鍵：長端溢酬</span>
+      <span class="status-item">最終防線：黃金脫鉤</span>
+    </div>
+  </header>
+
+  <section>
+    <h2>一、殖利率曲線：制度風險第一現場</h2>
+    <div class="grid">
+      <div class="card">
+        <div class="card-header">
+          <h3>US10Y 主圖 (建議疊加 US02Y, US30Y)</h3>
+        </div>
+        <div id="curve_chart" class="tv-container"></div>
+        <div class="logic-box">
+          <b>觀察重點：</b> 經濟數據疲軟時，長端（10Y/30Y）是否逆勢上行？<br />
+          <b>訊號：</b> 若 10Y-2Y 持續陡峭化（Bear Steepening），代表市場質疑長期債務償還能力。<br />
+          <b>疊加顯示：</b> 主圖為 US10Y，已自動疊加 US02Y 及 US30Y 以觀察殖利率曲線形態。
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>長短端差值 (Spread)</h3>
+        </div>
+        <div id="spread_chart" class="tv-container"></div>
+        <div class="logic-box">
+          <b>主要顯示：</b> US30Y-US10Y（極長-長端利差）<br />
+          <b>額外監控：</b> 已自動疊加 <code>US10Y-US02Y</code> 觀察長短端差值。<br />
+          <b>解讀：</b> 曲線失序轉陡，是「制度風險溢酬」定價的最直接證據。
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>二、美元與避險分裂</h2>
+    <div class="grid">
+      <div class="card">
+        <div class="card-header">
+          <h3>DXY 美元指數 (對比 US10Y)</h3>
+        </div>
+        <div id="dxy_chart" class="tv-container"></div>
+        <div class="logic-box">
+          <b>背離判定：</b> 正常時「利率↑ 美元↑」。<br />
+          <b>警告：</b> 若利率上升但美元走弱，代表美元「信用價值」正在流失，僅剩流動性。<br />
+          <b>對比方式：</b> 主圖為 DXY，已自動疊加 US10Y 以觀察利率與美元的相關性。
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>USDCHF + USDJPY (信用避險指標)</h3>
+        </div>
+        <div id="fx_chart" class="tv-container"></div>
+        <div class="logic-box">
+          <b>分裂辨識：</b> USDJPY 上漲（利差驅動）vs USDCHF 下跌（避險驅動）。<br />
+          <b>結論：</b> 若兩者走勢分叉，說明資金正在逃離美元信用，轉向純粹避險幣。<br />
+          <b>雙重顯示：</b> 主圖為 USDCHF，已自動疊加 USDJPY 同時觀察兩組避險貨幣對走勢。
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>三、非主權資產與債券信心</h2>
+    <div class="grid">
+      <div class="card">
+        <div class="card-header">
+          <h3>XAUUSD 黃金 (對比 實質利率)</h3>
+        </div>
+        <div id="gold_chart" class="tv-container"></div>
+        <div class="logic-box">
+          <b>脫鉤畫法：</b> 觀察 <code>XAUUSD</code> vs <code>FRED:DFII10</code>（實質利率）。<br />
+          <b>極端訊號：</b> 實質利率飆升但金價不跌，即為「制度信任危機」定價。<br />
+          <b>對比方式：</b> 主圖為 XAUUSD，已自動疊加 FRED:DFII10 觀察黃金與實質利率的關係。
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>TLT / ZROZ (長債信心)</h3>
+        </div>
+        <div id="bonds_chart" class="tv-container"></div>
+        <div class="logic-box">
+          <b>終極警訊：</b> 股市跌、債券價格（TLT）也跌。<br />
+          <b>口訣：</b> 經濟不好但長端不降、利率高但美元不強、實質利率升但黃金不跌。
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    設計理念：辨識制度風險定價過程 | 資料來源：TradingView | 更新：2026-01-12
+  </footer>
+
+  <script src="https://s3.tradingview.com/tv.js"></script>
+  <script>
+    function createChart(container, symbol, overlays = []) {
+      // 構建 studies 陣列，將 overlays 轉換為 TradingView 的 Comparison study
+      const studies = overlays.map(ov => ({
+        id: "Compare@tv-basicstudies",
+        inputs: { symbol: ov }
+      }));
+
+      new TradingView.widget({
+        "autosize": true,
+        "symbol": symbol,
+        "interval": "D",
+        "timezone": "Etc/UTC",
+        "theme": "dark",
+        "style": "1",
+        "locale": "zh_TW",
+        "toolbar_bg": "#161a1e",
+        "enable_publishing": false,
+        "hide_top_toolbar": false,
+        "hide_legend": false,
+        "save_image": false,
+        "container_id": container,
+        "studies": studies
+      });
+    }
+
+    // 初始化各個圖表
+    createChart("curve_chart", "US10Y", ["US02Y", "US30Y"]); // 主圖 US10Y + 疊加 US02Y, US30Y
+    createChart("spread_chart", "US30Y-US10Y", ["US10Y-US02Y"]); // 主圖 30Y-10Y + 疊加 10Y-2Y
+    createChart("dxy_chart", "DXY", ["US10Y"]); // 主圖 DXY + 疊加 US10Y
+    createChart("fx_chart", "USDCHF", ["USDJPY"]); // 主圖 USDCHF + 疊加 USDJPY
+    createChart("gold_chart", "XAUUSD", ["FRED:DFII10"]); // 主圖 黃金 + 疊加 實質利率 (FRED:DFII10)
+    createChart("bonds_chart", "TLT"); // 保持原樣
+  </script>
+
+</body>
+
+</html>
