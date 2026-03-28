@@ -14,46 +14,6 @@
             --accent-active: #2962ff;
         }
 
-        .vx-stats {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px 16px;
-            padding: 4px 10px;
-            font-size: 11px;
-            color: #aaa;
-            border-bottom: 1px solid var(--border-color);
-            flex-shrink: 0;
-        }
-        .vx-stat-label { color: #666; margin-right: 4px; }
-        .vx-stat-val { font-weight: 600; color: #ddd; }
-        .vx-stat-val.contango { color: #22ab94; }
-        .vx-stat-val.backwardation { color: #f7525f; }
-        .vx-chart-wrap {
-            position: relative;
-            flex-grow: 1;
-            padding: 6px 12px 6px 6px;
-        }
-
-        /* CDX custom chart panels */
-        .cdx-header {
-            display: flex;
-            align-items: baseline;
-            gap: 8px;
-            padding: 4px 8px 3px;
-            font-size: 11px;
-            border-bottom: 1px solid var(--border-color);
-            flex-shrink: 0;
-        }
-        .cdx-title { color: #e0e0e0; font-size: 11px; }
-        .cdx-val   { font-weight: 700; font-size: 13px; }
-        .cdx-chg   { font-size: 11px; }
-        .cdx-chg.up   { color: #f7525f; }   /* spread widening = bad */
-        .cdx-chg.down { color: #22ab94; }   /* spread tightening = good */
-        .cdx-updated  { margin-left: auto; color: #444; font-size: 10px; }
-        .cdx-wrap  { position: relative; flex-grow: 1; padding: 4px 8px 4px 4px; }
-        .cdx-msg   { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
-                     color: #555; font-size: 11px; text-align: center; line-height: 1.6; }
-
         body {
             margin: 0;
             padding: 0;
@@ -114,12 +74,13 @@
             font-weight: bold;
         }
 
-        /* 3x5 網格系統 */
+        /* 3x3 網格系統 */
         .grid-container {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(5, 1fr);
-            /* 5 equal rows */
+            /* 改為 3 欄 */
+            grid-template-rows: repeat(4, 1fr);
+            /* Modified to 4 rows */
             height: calc(100vh - var(--header-height));
             width: 100%;
             gap: 1px;
@@ -229,58 +190,10 @@
             <div id="tv_btc" class="tv-container"></div>
         </div>
 
-        <!-- Row 5: CDX spreads + VX Term Structure -->
-        <div class="chart-box">
-            <div class="chart-label" style="border-color:#e91e63">13. CDX.NA.HY 5Y</div>
-            <div class="cdx-header">
-                <span class="cdx-val" id="cdx_hy_val" style="color:#e91e63">—</span>
-                <span class="cdx-chg" id="cdx_hy_chg"></span>
-                <span class="cdx-updated" id="cdx_hy_upd"></span>
-            </div>
-            <div class="cdx-wrap">
-                <canvas id="cdxHyCanvas"></canvas>
-                <div class="cdx-msg" id="cdx_hy_msg">Loading…</div>
-            </div>
-        </div>
-        <div class="chart-box">
-            <div class="chart-label" style="border-color:#9c27b0">14. CDX.NA.IG 5Y</div>
-            <div class="cdx-header">
-                <span class="cdx-val" id="cdx_ig_val" style="color:#9c27b0">—</span>
-                <span class="cdx-chg" id="cdx_ig_chg"></span>
-                <span class="cdx-updated" id="cdx_ig_upd"></span>
-            </div>
-            <div class="cdx-wrap">
-                <canvas id="cdxIgCanvas"></canvas>
-                <div class="cdx-msg" id="cdx_ig_msg">Loading…</div>
-            </div>
-        </div>
 
-        <!-- VX Term Structure — row 5, col 3 -->
-        <div class="chart-box">
-            <div class="chart-label" style="border-left:3px solid #ff9800; position:static; display:flex; align-items:center; gap:6px; background:rgba(0,0,0,0.4); padding:5px 8px; border-radius:0; flex-shrink:0;">
-                15. VX Term Structure
-                <span id="vx_regime" style="padding:1px 7px; border-radius:3px; font-size:10px; font-weight:bold; display:none;"></span>
-            </div>
-            <div class="vx-stats" id="vx_stats" style="display:none;">
-                <span><span class="vx-stat-label">VIX Spot</span><span class="vx-stat-val" id="stat_spot">—</span></span>
-                <span><span class="vx-stat-label">Syn30d</span><span class="vx-stat-val" id="stat_syn30">—</span></span>
-                <span><span class="vx-stat-label">M1</span><span class="vx-stat-val" id="stat_m1">—</span></span>
-                <span><span class="vx-stat-label">M2</span><span class="vx-stat-val" id="stat_m2">—</span></span>
-                <span><span class="vx-stat-label">M3</span><span class="vx-stat-val" id="stat_m3">—</span></span>
-                <span><span class="vx-stat-label">M4</span><span class="vx-stat-val" id="stat_m4">—</span></span>
-                <span><span class="vx-stat-label">Contango%</span><span class="vx-stat-val" id="stat_contango">—</span></span>
-                <span style="margin-left:auto; color:#444; font-size:10px;" id="vx_timestamp"></span>
-            </div>
-            <div class="vx-chart-wrap">
-                <canvas id="vxCanvas"></canvas>
-                <div id="vx_loading" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#555;font-size:12px;">Loading VX term structure…</div>
-            </div>
-        </div>
 
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <script type="text/javascript">
 
@@ -300,11 +213,10 @@
             { id: 'tv_us30y', symbol: 'FRED:DGS30', style: '2' },
             { id: 'tv_usdc', symbol: 'CRYPTOCAP:USDC', style: '3' },
 
-            // Row 4
+            // Row 4 (shifted)
             { id: 'tv_hy', symbol: 'FRED:BAMLH0A0HYM2', style: '2' },
             { id: 'tv_corp', symbol: 'FRED:BAMLC0A0CM', style: '2' },
-            { id: 'tv_btc', symbol: 'COINBASE:BTCUSD', style: '1' },
-
+            { id: 'tv_btc', symbol: 'COINBASE:BTCUSD', style: '1' }
         ];
 
         let currentRange = '60m';
@@ -316,8 +228,6 @@
             const buttons = document.querySelectorAll('.time-btn');
             buttons.forEach(b => b.classList.remove('active'));
             if (buttons[btnMap[range]]) buttons[btnMap[range]].classList.add('active');
-
-            renderCDXCharts(range);
 
             chartConfigs.forEach(config => {
                 document.getElementById(config.id).innerHTML = '';
@@ -341,336 +251,7 @@
 
         window.onload = function () {
             syncCharts('60m');
-            loadVXTermStructure();
-            loadCDXData();
         };
-
-        // ── VX Term Structure ──────────────────────────────────────────────
-        let vxChartInstance = null;
-
-        const MONTH_CODE = { F:'Jan',G:'Feb',H:'Mar',J:'Apr',K:'May',M:'Jun',
-                             N:'Jul',Q:'Aug',U:'Sep',V:'Oct',X:'Nov',Z:'Dec' };
-
-        function vxMonthLabel(ticker) {
-            // e.g. "VXJ26" → "Apr 26"
-            const m = ticker.match(/VX([A-Z])(\d+)$/i);
-            if (!m) return ticker;
-            return (MONTH_CODE[m[1].toUpperCase()] || m[1]) + ' \'' + m[2].slice(-2);
-        }
-
-        async function loadVXTermStructure() {
-            try {
-                const res = await fetch(
-                    'https://cdn.cboe.com/api/global/delayed_quotes/futures/_VX.json',
-                    { cache: 'no-store' }
-                );
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                const json = await res.json();
-                renderVXChart(json.data);
-            } catch (err) {
-                console.error('VX fetch error:', err);
-                const el = document.getElementById('vx_loading');
-                if (el) el.textContent = 'Unable to load VX data (CORS or network error)';
-            }
-            // Auto-refresh every 5 min during market hours
-            setTimeout(loadVXTermStructure, 5 * 60 * 1000);
-        }
-
-        function renderVXChart(data) {
-            const loadingEl = document.getElementById('vx_loading');
-
-            // Parse spot VIX
-            const spot = parseFloat(data['IV Index'] ?? data.iv_index ?? 0);
-
-            // Sort futures by expiration and take first 8
-            const futures = (data.options || [])
-                .filter(f => f.last && parseFloat(f.last) > 0)
-                .sort((a, b) => new Date(a.expiration_date) - new Date(b.expiration_date))
-                .slice(0, 8);
-
-            if (!futures.length) {
-                if (loadingEl) loadingEl.textContent = 'No futures data returned.';
-                return;
-            }
-
-            const labels   = ['Spot', ...futures.map(f => vxMonthLabel(f.option))];
-            const lastArr  = [spot,   ...futures.map(f => parseFloat(f.last))];
-            const prevArr  = [spot,   ...futures.map(f => parseFloat(f.previous_close || f.last))];
-
-            const m1 = lastArr[1], m2 = lastArr[2];
-            const isBack = m1 > m2;
-            const curveColor  = isBack ? '#f7525f' : '#22ab94';
-            const regimeLabel = isBack ? 'BACKWARDATION' : 'CONTANGO';
-
-            // Synthetic 30-day: interpolate M1 & M2 based on DTE
-            const now = new Date();
-            const exp1 = new Date(futures[0].expiration_date);
-            const exp2 = futures[1] ? new Date(futures[1].expiration_date) : null;
-            let syn30 = m1;
-            if (exp2) {
-                const dte1 = Math.max(0, Math.round((exp1 - now) / 86400000));
-                syn30 = (m1 * dte1 + m2 * (30 - dte1)) / 30;
-            }
-
-            // Contango %: (M2 - M1) / M1 * 100
-            const contangoPct = ((m2 - m1) / m1 * 100);
-
-            // Update stat bar
-            const fmt = v => v.toFixed(2);
-            document.getElementById('stat_spot').textContent     = fmt(spot);
-            document.getElementById('stat_syn30').textContent    = fmt(syn30);
-            document.getElementById('stat_m1').textContent       = fmt(m1);
-            document.getElementById('stat_m2').textContent       = fmt(m2);
-            document.getElementById('stat_m3').textContent       = lastArr[3] ? fmt(lastArr[3]) : '—';
-            document.getElementById('stat_m4').textContent       = lastArr[4] ? fmt(lastArr[4]) : '—';
-            const contangoEl = document.getElementById('stat_contango');
-            contangoEl.textContent = (contangoPct >= 0 ? '+' : '') + contangoPct.toFixed(1) + '%';
-            contangoEl.className   = 'vx-stat-val ' + (isBack ? 'backwardation' : 'contango');
-
-            const tsEl = document.getElementById('vx_timestamp');
-            if (tsEl) tsEl.textContent = 'Updated ' + new Date().toLocaleTimeString();
-
-            const regimeEl = document.getElementById('vx_regime');
-            regimeEl.textContent = regimeLabel;
-            regimeEl.style.display     = 'inline-block';
-            regimeEl.style.background  = isBack ? 'rgba(247,82,95,0.15)' : 'rgba(34,171,148,0.15)';
-            regimeEl.style.color       = isBack ? '#f7525f' : '#22ab94';
-
-            document.getElementById('vx_stats').style.display = 'flex';
-            if (loadingEl) loadingEl.style.display = 'none';
-
-            const canvas = document.getElementById('vxCanvas');
-            const ctx    = canvas.getContext('2d');
-
-            if (vxChartInstance) { vxChartInstance.destroy(); vxChartInstance = null; }
-
-            vxChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels,
-                    datasets: [
-                        {
-                            label: 'Prev Close',
-                            data: prevArr,
-                            borderColor: 'rgba(120,120,130,0.55)',
-                            borderDash: [5, 4],
-                            borderWidth: 1.5,
-                            pointRadius: 3,
-                            pointBackgroundColor: 'rgba(120,120,130,0.55)',
-                            fill: false,
-                            tension: 0.35,
-                            order: 2
-                        },
-                        {
-                            label: 'Current',
-                            data: lastArr,
-                            borderColor: curveColor,
-                            borderWidth: 2.5,
-                            pointRadius: 5,
-                            pointBackgroundColor: curveColor,
-                            pointHoverRadius: 7,
-                            fill: {
-                                target: 'origin',
-                                above: curveColor.replace(')', ', 0.07)').replace('rgb', 'rgba')
-                            },
-                            tension: 0.35,
-                            order: 1
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    layout: { padding: { top: 4, right: 8, bottom: 4, left: 4 } },
-                    plugins: {
-                        legend: {
-                            labels: { color: '#888', font: { size: 11 }, boxWidth: 24 }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(19,23,34,0.95)',
-                            borderColor: '#2a2e39',
-                            borderWidth: 1,
-                            titleColor: '#ddd',
-                            bodyColor: '#aaa',
-                            callbacks: {
-                                label: c => ` ${c.dataset.label}: ${c.parsed.y.toFixed(2)}`
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            ticks: { color: '#777', font: { size: 11 } },
-                            grid:  { color: 'rgba(42,46,57,0.7)' },
-                            border: { color: '#2a2e39' }
-                        },
-                        y: {
-                            position: 'right',
-                            ticks: {
-                                color: '#777',
-                                font: { size: 11 },
-                                callback: v => v.toFixed(1)
-                            },
-                            grid:   { color: 'rgba(42,46,57,0.7)' },
-                            border: { color: '#2a2e39' }
-                        }
-                    },
-                    animation: { duration: 600, easing: 'easeInOutQuart' }
-                }
-            });
-        }
-
-        // ── CDX Term Structure Charts ──────────────────────────────────────
-        const CDX_CHARTS = {
-            hy: {
-                dataFile:  './data/cdx_hy.json',
-                canvasId:  'cdxHyCanvas',
-                msgId:     'cdx_hy_msg',
-                valId:     'cdx_hy_val',
-                chgId:     'cdx_hy_chg',
-                updId:     'cdx_hy_upd',
-                color:     '#e91e63',
-                instance:  null,
-                data:      null,
-            },
-            ig: {
-                dataFile:  './data/cdx_ig.json',
-                canvasId:  'cdxIgCanvas',
-                msgId:     'cdx_ig_msg',
-                valId:     'cdx_ig_val',
-                chgId:     'cdx_ig_chg',
-                updId:     'cdx_ig_upd',
-                color:     '#9c27b0',
-                instance:  null,
-                data:      null,
-            },
-        };
-
-        function rangeToDays(range) {
-            return { '1m': 30, '3m': 90, '6m': 180, '12m': 365, '60m': 1825, 'ALL': Infinity }[range] ?? 1825;
-        }
-
-        async function loadCDXData() {
-            await Promise.all(
-                Object.values(CDX_CHARTS).map(async cfg => {
-                    try {
-                        const res = await fetch(cfg.dataFile, { cache: 'no-cache' });
-                        if (!res.ok) throw new Error('HTTP ' + res.status);
-                        cfg.data = await res.json();
-                    } catch (e) {
-                        cfg.data = null;
-                    }
-                })
-            );
-            renderCDXCharts(currentRange);
-        }
-
-        function renderCDXCharts(range) {
-            Object.values(CDX_CHARTS).forEach(cfg => drawCDXChart(cfg, range));
-        }
-
-        function drawCDXChart(cfg, range) {
-            const msgEl = document.getElementById(cfg.msgId);
-            const valEl = document.getElementById(cfg.valId);
-            const chgEl = document.getElementById(cfg.chgId);
-            const updEl = document.getElementById(cfg.updId);
-
-            if (!cfg.data || !cfg.data.items || !cfg.data.items.length) {
-                const noData = !cfg.data || cfg.data.last_updated === null;
-                if (msgEl) msgEl.innerHTML = noData
-                    ? 'No data yet.<br>Add <code>CBONDS_LOGIN</code> &amp; <code>CBONDS_PASSWORD</code><br>to GitHub Secrets, then run the<br><b>Fetch CDX Data</b> workflow.'
-                    : 'Data file is empty.';
-                return;
-            }
-            if (msgEl) msgEl.style.display = 'none';
-
-            const days = rangeToDays(range);
-            const cutoff = new Date(Date.now() - days * 864e5);
-            const visible = days === Infinity
-                ? cfg.data.items
-                : cfg.data.items.filter(d => new Date(d.date) >= cutoff);
-
-            if (!visible.length) {
-                if (msgEl) { msgEl.textContent = 'No data for selected range.'; msgEl.style.display = ''; }
-                return;
-            }
-
-            // Stats
-            const last  = visible[visible.length - 1];
-            const prev  = visible.length > 1 ? visible[visible.length - 2] : null;
-            const chg   = prev ? last.value - prev.value : 0;
-            const chgPct = prev ? (chg / prev.value * 100) : 0;
-
-            if (valEl) valEl.textContent = last.value.toFixed(2) + ' bps';
-            if (chgEl) {
-                const sign = chg >= 0 ? '+' : '';
-                chgEl.textContent = `${sign}${chg.toFixed(2)} (${sign}${chgPct.toFixed(1)}%)`;
-                chgEl.className = 'cdx-chg ' + (chg >= 0 ? 'up' : 'down');
-            }
-            if (updEl && cfg.data.last_updated) {
-                updEl.textContent = 'as of ' + cfg.data.last_updated.slice(0, 10);
-            }
-
-            const chartData = visible.map(d => ({ x: d.date, y: d.value }));
-
-            const canvas = document.getElementById(cfg.canvasId);
-            const ctx = canvas.getContext('2d');
-            if (cfg.instance) { cfg.instance.destroy(); cfg.instance = null; }
-
-            const colorAlpha = cfg.color.replace(')', ', 0.12)').replace('rgb', 'rgba');
-
-            cfg.instance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    datasets: [{
-                        label: cfg.data.name,
-                        data: chartData,
-                        borderColor: cfg.color,
-                        borderWidth: 1.8,
-                        pointRadius: 0,
-                        pointHoverRadius: 4,
-                        pointHoverBackgroundColor: cfg.color,
-                        fill: { target: 'origin', above: colorAlpha },
-                        tension: 0.2,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    layout: { padding: { top: 2, right: 8, bottom: 2, left: 2 } },
-                    parsing: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: 'rgba(19,23,34,0.95)',
-                            borderColor: '#2a2e39',
-                            borderWidth: 1,
-                            titleColor: '#aaa',
-                            bodyColor: '#ddd',
-                            callbacks: {
-                                title: items => items[0].raw.x,
-                                label: item  => ` ${item.raw.y.toFixed(2)} bps`,
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            type: 'time',
-                            time: { tooltipFormat: 'yyyy-MM-dd', displayFormats: { month: 'MMM yy', year: 'yyyy' } },
-                            ticks: { color: '#666', font: { size: 10 }, maxTicksLimit: 6 },
-                            grid:  { color: 'rgba(42,46,57,0.6)' },
-                            border: { color: '#2a2e39' },
-                        },
-                        y: {
-                            position: 'right',
-                            ticks: { color: '#666', font: { size: 10 }, callback: v => v + ' bps' },
-                            grid:   { color: 'rgba(42,46,57,0.6)' },
-                            border: { color: '#2a2e39' },
-                        }
-                    },
-                    animation: { duration: 400 },
-                }
-            });
-        }
 
     </script>
 
