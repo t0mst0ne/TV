@@ -1,0 +1,146 @@
+//@version=5
+
+// 加上 overlay=true 把指標畫在主圖價格區
+
+indicator("McClellan Summation Index as Candles", shorttitle="MSI Candles", overlay=false, max_labels_count=500)
+
+
+
+// --- 1. 計算 MSI 數值 ---
+
+adv = request.security("USI:ADVN.NY", "D", close)
+
+decl = request.security("USI:DECL.NY", "D", close)
+
+net_breadth = adv - decl
+
+ema19 = ta.ema(net_breadth, 19)
+
+ema39 = ta.ema(net_breadth, 39)
+
+osc = ema19 - ema39
+
+msi = ta.cum(osc)
+
+
+
+// --- 2. 畫出「偽 K 線」 ---
+
+// 這裡我們用 plotcandle 函數，把 OHLC 全部設為 msi 的值
+
+// 為了讓它看起來像 K 線，我們可以做一點微小的「假波動」讓它有顏色 (這只是視覺效果)
+
+fake_open = msi[1] // 昨天的 MSI 當作今天的開盤
+
+fake_close = msi   // 今天的 MSI 當作收盤
+
+fake_high = math.max(fake_open, fake_close)
+
+fake_low = math.min(fake_open, fake_close)
+
+
+
+// 繪製 K 線 (顏色邏輯：上漲綠，下跌紅)
+
+col = fake_close > fake_open ? color.green : color.red
+
+plotcandle(fake_open, fake_high, fake_low, fake_close, title="MSI Candles", color=col, wickcolor=col, bordercolor=col)
+
+
+
+// --- 3. 關鍵：輸出數值供外部使用 ---
+
+// 這一行讓其他指標可以抓到這個數值
+
+plot(msi, "MSI Value", display=display.none)
+
+
+
+// --- 4. DeMark TD Setup & Sequential ---
+
+// Y 軸間距（用來定位 label 位置）
+msi_hi = ta.highest(msi, 200)
+msi_lo = ta.lowest(msi, 200)
+y_gap  = (msi_hi - msi_lo) * 0.025
+
+// ── Setup 計數 ──
+// Buy Setup：連續 N 根 close < close[4]
+// Sell Setup：連續 N 根 close > close[4]
+var int td_buy_setup  = 0
+var int td_sell_setup = 0
+
+td_buy_setup  := fake_close < fake_close[4] ? td_buy_setup  + 1 : 0
+td_sell_setup := fake_close > fake_close[4] ? td_sell_setup + 1 : 0
+
+bool td_buy9  = td_buy_setup  == 9
+bool td_sell9 = td_sell_setup == 9
+
+// ── Countdown 計數 ──
+// Buy Countdown：setup 完成後，close <= low[2]  累積到 13
+// Sell Countdown：setup 完成後，close >= high[2] 累積到 13
+var int  td_buy_cd    = 0
+var int  td_sell_cd   = 0
+var bool td_in_buy_cd = false
+var bool td_in_sell_cd = false
+
+if td_buy9
+    td_in_buy_cd  := true
+    td_buy_cd     := 0
+    td_in_sell_cd := false
+    td_sell_cd    := 0
+
+if td_sell9
+    td_in_sell_cd := true
+    td_sell_cd    := 0
+    td_in_buy_cd  := false
+    td_buy_cd     := 0
+
+if td_in_buy_cd and td_buy_cd < 13
+    if fake_close <= fake_low[2]
+        td_buy_cd := td_buy_cd + 1
+
+if td_in_sell_cd and td_sell_cd < 13
+    if fake_close >= fake_high[2]
+        td_sell_cd := td_sell_cd + 1
+
+// ── Labels：Setup 1–9 (blue) ──
+if td_buy_setup >= 1 and td_buy_setup <= 9
+    _txt = td_buy9 ? "9▲" : str.tostring(td_buy_setup)
+    _col = td_buy9 ? color.new(#00BFFF, 0) : color.new(#00BFFF, 30)
+    label.new(bar_index, fake_low - y_gap, _txt,
+              color=color.new(color.black, 100),
+              textcolor=_col,
+              style=label.style_label_up,
+              size=td_buy9 ? size.large : size.normal)
+
+if td_sell_setup >= 1 and td_sell_setup <= 9
+    _txt = td_sell9 ? "9▼" : str.tostring(td_sell_setup)
+    _col = td_sell9 ? color.new(#00BFFF, 0) : color.new(#00BFFF, 30)
+    label.new(bar_index, fake_high + y_gap, _txt,
+              color=color.new(color.black, 100),
+              textcolor=_col,
+              style=label.style_label_down,
+              size=td_sell9 ? size.large : size.normal)
+
+// ── Labels：Countdown 1–13 (red) ──
+if td_in_buy_cd and td_buy_cd >= 1
+    _txt = td_buy_cd == 13 ? "13✓" : str.tostring(td_buy_cd)
+    _col = td_buy_cd == 13 ? color.new(#FF4444, 0) : color.new(#FF4444, 20)
+    label.new(bar_index, fake_low - y_gap * 2.5, _txt,
+              color=color.new(color.black, 100),
+              textcolor=_col,
+              style=label.style_label_up,
+              size=td_buy_cd == 13 ? size.large : size.normal)
+    if td_buy_cd >= 13
+        td_in_buy_cd := false
+
+if td_in_sell_cd and td_sell_cd >= 1
+    _txt = td_sell_cd == 13 ? "13✓" : str.tostring(td_sell_cd)
+    _col = td_sell_cd == 13 ? color.new(#FF4444, 0) : color.new(#FF4444, 20)
+    label.new(bar_index, fake_high + y_gap * 2.5, _txt,
+              color=color.new(color.black, 100),
+              textcolor=_col,
+              style=label.style_label_down,
+              size=td_sell_cd == 13 ? size.large : size.normal)
+    if td_sell_cd >= 13
+        td_in_sell_cd := false
