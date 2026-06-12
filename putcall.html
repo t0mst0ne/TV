@@ -120,7 +120,7 @@
 
     <div class="top-bar">
         <div class="title-group">
-            <h1>US Equity Put/Call Ratio & Sentiment Matrix (3x3)</h1>
+            <h1>US Equity Put/Call Ratio & Sentiment Matrix (3x3)　<span style="font-weight:400;font-size:12px;color:#ff9800">橘 = 指標</span>　<span style="font-weight:400;font-size:12px;color:#2962ff">藍 = SPX</span></h1>
         </div>
         <div class="time-controls">
             <button class="time-btn" onclick="syncCharts('1m')">1M</button>
@@ -185,6 +185,14 @@
         // 自適應極值用 Bollinger Bands（20MA±2σ）呈現；嵌入 widget 無法畫固定水平線。
         const SPX_OVERLAY = [{ symbol: 'AMEX:SPY', position: 'NewPriceScale' }];
         const BB = ['BB@tv-basicstudies'];
+        // compare 線顏色無法用 studies_overrides 改（實測無效），
+        // 改為把主序列換成橘色，讓 SPX 疊線維持預設藍色以利區分
+        const MAIN_ORANGE = {
+            "mainSeriesProperties.areaStyle.color1": "rgba(255, 152, 0, 0.28)",
+            "mainSeriesProperties.areaStyle.color2": "rgba(255, 152, 0, 0.05)",
+            "mainSeriesProperties.areaStyle.linecolor": "#ff9800",
+            "mainSeriesProperties.lineStyle.color": "#ff9800"
+        };
 
         const chartConfigs = [
             // Row 1: Put/Call Ratios（面積圖 + BB 極值帶 + SPX 疊圖）
@@ -230,6 +238,7 @@
                     "save_image": false,
                     "studies": config.studies || [],
                     "compareSymbols": config.overlay ? SPX_OVERLAY : [],
+                    "overrides": config.overlay ? MAIN_ORANGE : {},
                     "container_id": config.id
                 });
             });
