@@ -104,14 +104,46 @@
             border-radius: 4px;
             font-size: 11px;
             color: #e0e0e0;
-            pointer-events: none;
+            cursor: pointer;
             border-left: 3px solid #555;
+        }
+
+        /* 透明雙擊捕捉層：iframe 不會把滑鼠事件冒泡出來，整格互動由此層代理 */
+        .dbl-catch {
+            position: absolute;
+            inset: 0;
+            z-index: 5;
+            cursor: zoom-in;
         }
 
         .tv-container {
             flex-grow: 1;
             width: 100%;
             height: 100%;
+        }
+
+        /* 雙擊放大：蓋滿 top-bar 以下整個視窗 */
+        .chart-box.fullscreen {
+            position: fixed;
+            top: var(--header-height);
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1000;
+        }
+
+        /* 全螢幕時隱藏捕捉層讓圖表可互動，還原入口改為標籤雙擊或 Esc */
+        .chart-box.fullscreen .dbl-catch {
+            display: none;
+        }
+
+        .chart-box.fullscreen .chart-label {
+            cursor: zoom-out;
+        }
+
+        .chart-box.fullscreen .chart-label::after {
+            content: "　⤢ 雙擊此處或按 Esc 還原";
+            color: #ff9800;
         }
     </style>
 </head>
@@ -120,7 +152,7 @@
 
     <div class="top-bar">
         <div class="title-group">
-            <h1>US Equity Put/Call Ratio & Sentiment Matrix (3x3)　<span style="font-weight:400;font-size:12px;color:#ff9800">橘 = 指標</span>　<span style="font-weight:400;font-size:12px;color:#2962ff">藍 = SPX</span></h1>
+            <h1>US Equity Put/Call Ratio & Sentiment Matrix (3x3)　<span style="font-weight:400;font-size:12px;color:#ff9800">橘 = 指標</span>　<span style="font-weight:400;font-size:12px;color:#2962ff">藍 = SPX</span>　<span style="font-weight:400;font-size:12px;color:#666">雙擊圖表 = 全螢幕／還原（Esc 退出）</span></h1>
         </div>
         <div class="time-controls">
             <button class="time-btn" onclick="syncCharts('1m')">1M</button>
@@ -202,8 +234,9 @@
 
             // Row 2: SPX P/C + 波動率情緒（皆疊 SPX）
             { id: 'tv_pcspx', symbol: 'USI:PCSPX', style: '3', studies: BB, overlay: true },
-            { id: 'tv_vix', symbol: 'FRED:VIXCLS', style: '2', overlay: true },
-            { id: 'tv_vixterm', symbol: 'FRED:VXVCLS/FRED:VIXCLS', style: '2', overlay: true },
+            // style '2' 線圖不吃 lineStyle.color override（實測），統一用 '3' 面積圖
+            { id: 'tv_vix', symbol: 'FRED:VIXCLS', style: '3', overlay: true },
+            { id: 'tv_vixterm', symbol: 'FRED:VXVCLS/FRED:VIXCLS', style: '3', overlay: true },
 
             // Row 3: 衍生比值 + 聰明錢 + 大盤對照
             { id: 'tv_vxn', symbol: 'USI:PCCE/USI:PCCI', style: '3', studies: BB, overlay: true },
@@ -243,6 +276,30 @@
                 });
             });
         }
+
+        // ===== 雙擊全螢幕 =====
+        // TradingView widget 是跨網域 iframe：圖上的滑鼠事件不冒泡、點擊也不轉移焦點
+        // （canvas 對 mousedown preventDefault，blur 偵測法無效），
+        // 因此每格鋪一層透明 .dbl-catch 捕捉雙擊；全螢幕時隱藏該層恢復圖表互動。
+        function toggleFullscreen(box) {
+            const wasFull = box.classList.contains('fullscreen');
+            document.querySelectorAll('.chart-box.fullscreen').forEach(b => b.classList.remove('fullscreen'));
+            if (!wasFull) box.classList.add('fullscreen');
+        }
+
+        document.querySelectorAll('.chart-box').forEach(box => {
+            const catcher = document.createElement('div');
+            catcher.className = 'dbl-catch';
+            box.appendChild(catcher);
+            // dblclick 掛在 box：捕捉層（格子狀態）與標籤（全螢幕狀態）都會冒泡到這裡
+            box.addEventListener('dblclick', () => toggleFullscreen(box));
+        });
+
+        window.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.chart-box.fullscreen').forEach(b => b.classList.remove('fullscreen'));
+            }
+        });
 
         window.onload = function () {
             syncCharts('60m');
