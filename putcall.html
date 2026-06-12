@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>US Equity Put/Call Ratio & Sentiment Dashboard (v1)</title>
+    <title>US Equity Put/Call Ratio & Sentiment Dashboard (v2)</title>
     <style>
         :root {
             --bg-color: #000000;
@@ -135,37 +135,37 @@
     <div class="grid-container">
 
         <div class="chart-box">
-            <div class="chart-label" style="border-color:#2962ff">1. Equity Put/Call Ratio (CBOE)</div>
+            <div class="chart-label" style="border-color:#2962ff">1. Equity P/C ⊕SPX｜>1.0 過度悲觀(偏多反轉) / <0.5 過度樂觀(偏空)</div>
             <div id="tv_pcce" class="tv-container"></div>
         </div>
         <div class="chart-box">
-            <div class="chart-label" style="border-color:#888">2. Total Put/Call Ratio (Eq+Idx)</div>
+            <div class="chart-label" style="border-color:#888">2. Total P/C ⊕SPX｜>1.2 偏多反轉 / <0.8 偏空</div>
             <div id="tv_pcc" class="tv-container"></div>
         </div>
         <div class="chart-box">
-            <div class="chart-label" style="border-color:#888">3. Index Put/Call Ratio (CBOE)</div>
+            <div class="chart-label" style="border-color:#888">3. Index P/C ⊕SPX（機構避險，常態>1，無逆向閾值）</div>
             <div id="tv_pcci" class="tv-container"></div>
         </div>
 
         <div class="chart-box">
-            <div class="chart-label" style="border-color:#d029ff">4. SPX Put/Call Ratio</div>
+            <div class="chart-label" style="border-color:#d029ff">4. SPX P/C ⊕SPX｜看 BB 帶極值（±2σ）</div>
             <div id="tv_pcspx" class="tv-container"></div>
         </div>
         <div class="chart-box">
-            <div class="chart-label" style="border-color:#f7525f">5. VIX (FRED:VIXCLS)</div>
+            <div class="chart-label" style="border-color:#f7525f">5. VIX ⊕SPX (FRED:VIXCLS)</div>
             <div id="tv_vix" class="tv-container"></div>
         </div>
         <div class="chart-box">
-            <div class="chart-label" style="border-color:#f7525f">6. VIX Term Structure (3M/Spot, <1 = 恐慌)</div>
+            <div class="chart-label" style="border-color:#f7525f">6. VIX Term Structure ⊕SPX（3M/Spot，<1 = 恐慌/常見底部）</div>
             <div id="tv_vixterm" class="tv-container"></div>
         </div>
 
         <div class="chart-box">
-            <div class="chart-label" style="border-color:#ff9800">7. Equity/Index P/C Ratio (散戶/機構)</div>
+            <div class="chart-label" style="border-color:#ff9800">7. Equity/Index P/C ⊕SPX（散戶/機構）</div>
             <div id="tv_vxn" class="tv-container"></div>
         </div>
         <div class="chart-box">
-            <div class="chart-label" style="border-color:#ff9800">8. OEX Put/Call (Smart Money)</div>
+            <div class="chart-label" style="border-color:#ff9800">8. OEX P/C ⊕SPX（聰明錢：高=機構買 put，偏空，非逆向）</div>
             <div id="tv_rvx" class="tv-container"></div>
         </div>
         <div class="chart-box">
@@ -180,21 +180,26 @@
 
         // 註：FRED 已於多年前下架 CBOE put/call ratio 序列（release 200 現僅剩波動率指數），
         // put/call 數據改用 TradingView 的 Cboe USI 符號；FRED 僅保留關聯的波動率序列。
-        const chartConfigs = [
-            // Row 1: Put/Call Ratios (含 10 日均線平滑雜訊)
-            { id: 'tv_pcce', symbol: 'USI:PCCE', style: '2', studies: ['MASimple@tv-basicstudies'] },
-            { id: 'tv_pcc', symbol: 'USI:PCC', style: '2', studies: ['MASimple@tv-basicstudies'] },
-            { id: 'tv_pcci', symbol: 'USI:PCCI', style: '2', studies: ['MASimple@tv-basicstudies'] },
+        // 註：CBOE:/TVC:/SP: 等來源不開放嵌入 widget，僅 USI:/INDEX:/FRED:/AMEX: 可用。
+        // 反轉閾值依逆向情緒文獻（Zweig；Simon & Wiggins 2001）：固定閾值寫在標籤，
+        // 自適應極值用 Bollinger Bands（20MA±2σ）呈現；嵌入 widget 無法畫固定水平線。
+        const SPX_OVERLAY = [{ symbol: 'AMEX:SPY', position: 'NewPriceScale' }];
+        const BB = ['BB@tv-basicstudies'];
 
-            // Row 2: SPX P/C + 波動率情緒
-            { id: 'tv_pcspx', symbol: 'USI:PCSPX', style: '2', studies: ['MASimple@tv-basicstudies'] },
-            { id: 'tv_vix', symbol: 'FRED:VIXCLS', style: '2' },
-            { id: 'tv_vixterm', symbol: 'FRED:VXVCLS/FRED:VIXCLS', style: '2' },
+        const chartConfigs = [
+            // Row 1: Put/Call Ratios（面積圖 + BB 極值帶 + SPX 疊圖）
+            { id: 'tv_pcce', symbol: 'USI:PCCE', style: '3', studies: BB, overlay: true },
+            { id: 'tv_pcc', symbol: 'USI:PCC', style: '3', studies: BB, overlay: true },
+            { id: 'tv_pcci', symbol: 'USI:PCCI', style: '3', studies: BB, overlay: true },
+
+            // Row 2: SPX P/C + 波動率情緒（皆疊 SPX）
+            { id: 'tv_pcspx', symbol: 'USI:PCSPX', style: '3', studies: BB, overlay: true },
+            { id: 'tv_vix', symbol: 'FRED:VIXCLS', style: '2', overlay: true },
+            { id: 'tv_vixterm', symbol: 'FRED:VXVCLS/FRED:VIXCLS', style: '2', overlay: true },
 
             // Row 3: 衍生比值 + 聰明錢 + 大盤對照
-            // 註：CBOE:/TVC:/SP: 等來源不開放嵌入 widget，僅 USI:/INDEX:/FRED:/AMEX: 可用
-            { id: 'tv_vxn', symbol: 'USI:PCCE/USI:PCCI', style: '2' },
-            { id: 'tv_rvx', symbol: 'USI:PCOEX', style: '2', studies: ['MASimple@tv-basicstudies'] },
+            { id: 'tv_vxn', symbol: 'USI:PCCE/USI:PCCI', style: '3', studies: BB, overlay: true },
+            { id: 'tv_rvx', symbol: 'USI:PCOEX', style: '3', studies: BB, overlay: true },
             { id: 'tv_spx', symbol: 'AMEX:SPY', style: '1' }
         ];
 
@@ -224,6 +229,7 @@
                     "hide_legend": true,
                     "save_image": false,
                     "studies": config.studies || [],
+                    "compareSymbols": config.overlay ? SPX_OVERLAY : [],
                     "container_id": config.id
                 });
             });
