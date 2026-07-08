@@ -49,20 +49,16 @@ jobs:
 
       # 7. 提交並推送變更
       - name: Commit and Push
+        if: always()
         working-directory: dashboard
-        env:
-          GIT_AUTHOR_NAME: 'github-actions[bot]'
-          GIT_AUTHOR_EMAIL: 'github-actions[bot]@users.noreply.github.com'
-          GIT_COMMITTER_NAME: 'github-actions[bot]'
-          GIT_COMMITTER_EMAIL: 'github-actions[bot]@users.noreply.github.com'
         run: |
-          git config --local user.name "github-actions[bot]"
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "GitHub Action"
+          git config --local user.email "action@github.com"
 
           if [ -f dashboard_state.json ] || [ -f liquidity_monitor.csv ]; then
             git add dashboard_state.json liquidity_monitor.csv 2>/dev/null || true
-            git commit -m "chore: Auto-update liquidity monitoring data" || echo "No changes"
-            git push https://${{ github.token }}@github.com/${{ github.repository }}.git main || echo "Push failed, but continuing..."
+            git commit -m "chore: Auto-update liquidity monitoring data" || echo "No changes to commit"
+            git push origin main 2>&1 || echo "Push failed (files still generated locally)"
           fi
 
       # 8. 建立狀態報告
