@@ -370,7 +370,7 @@ def main():
     liquidity_state, adjustment = monitor.generate_report()
 
     # 匯出數據
-    monitor.export_to_csv('Backtest/FED_Policy_Momentum_Analysis/liquidity_monitor.csv')
+    monitor.export_to_csv('liquidity_monitor.csv')
 
     return monitor, liquidity_state, adjustment
 
