@@ -354,8 +354,10 @@ def main():
     print("🔍 流動性監測系統 (Liquidity Monitor)")
     print("="*80)
 
-    # 初始化監測系統
-    monitor = LiquidityMonitor(api_key='')  # 需要設定 FRED API Key
+    # 初始化監測系統 - 從環境變數讀取 FRED API Key
+    import os
+    api_key = os.environ.get('FRED_API_KEY', '')
+    monitor = LiquidityMonitor(api_key=api_key)
 
     # 如果沒有 API Key，使用離線模式
     if not monitor.FRED_API_KEY:
