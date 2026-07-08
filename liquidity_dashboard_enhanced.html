@@ -489,8 +489,15 @@
         // 從 dashboard_state.json 讀取實時監測數據
         async function getMonitoringData() {
             try {
-                console.log('📡 正在嘗試讀取: ./dashboard_state.json');
-                const response = await fetch('./dashboard_state.json?v=' + Date.now());
+                console.log('📡 正在嘗試讀取: dashboard_state.json');
+                // 嘗試多個可能的路徑
+                let response = await fetch('./dashboard_state.json?v=' + Date.now());
+
+                if (!response.ok) {
+                    console.log('⚠️ 路徑 ./dashboard_state.json 失敗，嘗試 /TV/dashboard_state.json');
+                    response = await fetch('/TV/dashboard_state.json?v=' + Date.now());
+                }
+
                 console.log('📡 回應狀態:', response.status);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
