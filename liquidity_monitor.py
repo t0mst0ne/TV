@@ -48,9 +48,11 @@ class LiquidityMonitor:
     }
 
     # 閾值定義
+    # 淨流動性用「一年歷史分位數」分級，避免絕對值閾值隨 Fed 資產負債表規模失效
     THRESHOLDS = {
-        'net_liquidity_critical': 1.5,      # < 1.5T = 危機
-        'net_liquidity_tight': 2.0,         # 1.5-2.0T = 緊張
+        'net_liquidity_pctl_abundant': 70,  # 分位數 > 70% = 充足
+        'net_liquidity_pctl_tight': 40,     # 20-40% = 緊張
+        'net_liquidity_pctl_critical': 20,  # < 20% = 危機
         'sofr_rate_high': 5.5,              # > 5.5% = 流動性緊張
         'stress_spread_high': 50,           # > 50 bps = 壓力信號
         'hy_spread_wide': 450,              # > 450 bps = 風險厭惡
@@ -65,30 +67,41 @@ class LiquidityMonitor:
         self.historical_data = {}
 
     def fetch_fred_data(self, series_id, days=30):
-        """從 FRED 獲取指標數據"""
-        if not self.FRED_API_KEY:
-            print(f"⚠️  FRED_API_KEY 未設定，無法獲取 {series_id}")
-            return None
+        """從 FRED 獲取指標數據（有 API key 用官方 API，否則用免 key 的 fredgraph.csv）"""
+        start = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
+        end = datetime.now().strftime('%Y-%m-%d')
 
         try:
-            url = f"https://api.stlouisfed.org/fred/series/observations"
-            params = {
-                'series_id': series_id,
-                'api_key': self.FRED_API_KEY,
-                'file_type': 'json',
-                'observation_start': (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d'),
-                'observation_end': datetime.now().strftime('%Y-%m-%d'),
-            }
+            if self.FRED_API_KEY:
+                url = "https://api.stlouisfed.org/fred/series/observations"
+                params = {
+                    'series_id': series_id,
+                    'api_key': self.FRED_API_KEY,
+                    'file_type': 'json',
+                    'observation_start': start,
+                    'observation_end': end,
+                }
+                response = requests.get(url, params=params, timeout=15)
+                response.raise_for_status()
+                data = response.json()
 
-            response = requests.get(url, params=params, timeout=10)
-            response.raise_for_status()
-            data = response.json()
+                if 'observations' in data:
+                    df = pd.DataFrame(data['observations'])[['date', 'value']]
+                else:
+                    return None
+            else:
+                # FRED 公開 CSV 端點，不需 API key
+                url = "https://fred.stlouisfed.org/graph/fredgraph.csv"
+                params = {'id': series_id, 'cosd': start, 'coed': end}
+                response = requests.get(url, params=params, timeout=15)
+                response.raise_for_status()
+                from io import StringIO
+                df = pd.read_csv(StringIO(response.text))
+                df.columns = ['date', 'value']
 
-            if 'observations' in data:
-                df = pd.DataFrame(data['observations'])
-                df['date'] = pd.to_datetime(df['date'])
-                df['value'] = pd.to_numeric(df['value'], errors='coerce')
-                return df.dropna(subset=['value']).sort_values('date')
+            df['date'] = pd.to_datetime(df['date'])
+            df['value'] = pd.to_numeric(df['value'], errors='coerce')
+            return df.dropna(subset=['value']).sort_values('date')
 
         except Exception as e:
             print(f"❌ 無法獲取 {series_id}: {e}")
@@ -97,21 +110,30 @@ class LiquidityMonitor:
 
     def calculate_net_liquidity(self):
         """
-        計算淨流動性 = (WALCL/1000 - WTREGEN - RRPONTSYD)
-        即: (聯準會資產 - TGA - RRP) / 1000
+        計算淨流動性（單位：兆美元）= WALCL - WTREGEN - RRPONTSYD
+        FRED 單位: WALCL/WTREGEN 為百萬美元、RRPONTSYD 為十億美元
         """
         try:
-            walcl = self.fetch_fred_data('WALCL', days=90)
-            wtregen = self.fetch_fred_data('WTREGEN', days=90)
-            rrpontsyd = self.fetch_fred_data('RRPONTSYD', days=90)
+            # 抓一年資料供分位數分級使用
+            walcl = self.fetch_fred_data('WALCL', days=365)
+            wtregen = self.fetch_fred_data('WTREGEN', days=365)
+            rrpontsyd = self.fetch_fred_data('RRPONTSYD', days=365)
 
             if walcl is not None and wtregen is not None and rrpontsyd is not None:
-                # 合併數據
-                df = walcl[['date', 'value']].rename(columns={'value': 'walcl'})
-                df['wtregen'] = wtregen.set_index('date')['value']
-                df['rrpontsyd'] = rrpontsyd.set_index('date')['value']
+                # 以日期對齊（WALCL 為週頻，先 ffill 補到日頻）
+                df = pd.concat(
+                    [
+                        walcl.set_index('date')['value'].rename('walcl'),
+                        wtregen.set_index('date')['value'].rename('wtregen'),
+                        rrpontsyd.set_index('date')['value'].rename('rrpontsyd'),
+                    ],
+                    axis=1,
+                ).sort_index().ffill().dropna()
 
-                df['net_liquidity'] = (df['walcl'] / 1000 - df['wtregen'] - df['rrpontsyd'])
+                df['net_liquidity'] = (
+                    df['walcl'] / 1e6 - df['wtregen'] / 1e6 - df['rrpontsyd'] / 1e3
+                )
+                df = df.reset_index()
 
                 self.historical_data['net_liquidity'] = df
                 return df
@@ -131,9 +153,17 @@ class LiquidityMonitor:
             iorb = self.fetch_fred_data('IORB', days=90)
 
             if sofr is not None and iorb is not None:
-                df = sofr[['date', 'value']].rename(columns={'value': 'sofr'})
-                df['iorb'] = iorb.set_index('date')['value']
-                df['stress_spread'] = (df['sofr'] - df['iorb']) * 10000  # 轉換為 bps
+                df = pd.concat(
+                    [
+                        sofr.set_index('date')['value'].rename('sofr'),
+                        iorb.set_index('date')['value'].rename('iorb'),
+                    ],
+                    axis=1,
+                ).sort_index().ffill().dropna()
+
+                # SOFR 與 IORB 皆為百分比，1% = 100 bps
+                df['stress_spread'] = (df['sofr'] - df['iorb']) * 100
+                df = df.reset_index()
 
                 self.historical_data['stress_spread'] = df
                 return df
@@ -156,20 +186,25 @@ class LiquidityMonitor:
         signals = []
         score = 100
 
-        # 1. 淨流動性評估
+        # 1. 淨流動性評估（一年歷史分位數）
         net_liq_df = self.calculate_net_liquidity()
         if net_liq_df is not None and len(net_liq_df) > 0:
             latest_net_liq = net_liq_df['net_liquidity'].iloc[-1]
+            pctl = (net_liq_df['net_liquidity'] <= latest_net_liq).mean() * 100
             self.current_state['net_liquidity'] = latest_net_liq
+            self.current_state['net_liquidity_pctl'] = pctl
 
-            if latest_net_liq < self.THRESHOLDS['net_liquidity_critical']:
-                signals.append(f"🚨 淨流動性危機: ${latest_net_liq:.2f}T < ${self.THRESHOLDS['net_liquidity_critical']}T")
+            if pctl < self.THRESHOLDS['net_liquidity_pctl_critical']:
+                signals.append(f"🚨 淨流動性危機: ${latest_net_liq:.2f}T（1年分位數 {pctl:.0f}% < {self.THRESHOLDS['net_liquidity_pctl_critical']}%）")
                 score -= 50
-            elif latest_net_liq < self.THRESHOLDS['net_liquidity_tight']:
-                signals.append(f"⚠️  淨流動性緊張: ${latest_net_liq:.2f}T < ${self.THRESHOLDS['net_liquidity_tight']}T")
+            elif pctl < self.THRESHOLDS['net_liquidity_pctl_tight']:
+                signals.append(f"⚠️  淨流動性緊張: ${latest_net_liq:.2f}T（1年分位數 {pctl:.0f}% < {self.THRESHOLDS['net_liquidity_pctl_tight']}%）")
                 score -= 25
+            elif pctl < self.THRESHOLDS['net_liquidity_pctl_abundant']:
+                signals.append(f"✓ 淨流動性正常: ${latest_net_liq:.2f}T（1年分位數 {pctl:.0f}%）")
+                score -= 10
             else:
-                signals.append(f"✅ 淨流動性充足: ${latest_net_liq:.2f}T")
+                signals.append(f"✅ 淨流動性充足: ${latest_net_liq:.2f}T（1年分位數 {pctl:.0f}%）")
 
         # 2. SOFR 利率評估
         try:
@@ -204,15 +239,18 @@ class LiquidityMonitor:
             corp_df = self.fetch_fred_data('BAMLC0A0CM', days=30)
 
             if hy_df is not None and len(hy_df) > 0:
-                latest_hy = hy_df['value'].iloc[-1]
+                # FRED BAMLH0A0HYM2 單位為百分比，轉為 bps
+                latest_hy = hy_df['value'].iloc[-1] * 100
                 self.current_state['hy_spread'] = latest_hy
 
                 if latest_hy > self.THRESHOLDS['hy_spread_wide']:
                     signals.append(f"⚠️  高收益利差擴大: {latest_hy:.0f} bps > {self.THRESHOLDS['hy_spread_wide']} bps")
                     score -= 15
+                else:
+                    signals.append(f"✅ 高收益利差正常: {latest_hy:.0f} bps")
 
             if corp_df is not None and len(corp_df) > 0:
-                latest_corp = corp_df['value'].iloc[-1]
+                latest_corp = corp_df['value'].iloc[-1] * 100
                 self.current_state['corp_spread'] = latest_corp
         except:
             pass
@@ -342,7 +380,20 @@ class LiquidityMonitor:
             }
 
             df = pd.DataFrame(export_data)
-            df.to_csv(filename, mode='a', header=not pd.io.common.file_exists(filename), index=False)
+
+            # 欄位與既有檔案一致才附加，否則重建（避免欄位錯位）
+            if pd.io.common.file_exists(filename):
+                try:
+                    existing_cols = list(pd.read_csv(filename, nrows=0).columns)
+                except Exception:
+                    existing_cols = None
+                if existing_cols == list(df.columns):
+                    df.to_csv(filename, mode='a', header=False, index=False)
+                else:
+                    print(f"⚠️  欄位不一致，重建 {filename}")
+                    df.to_csv(filename, mode='w', header=True, index=False)
+            else:
+                df.to_csv(filename, mode='w', header=True, index=False)
             print(f"✅ 數據已匯出到: {filename}")
         except Exception as e:
             print(f"❌ 匯出失敗: {e}")
@@ -359,14 +410,9 @@ def main():
     api_key = os.environ.get('FRED_API_KEY', '')
     monitor = LiquidityMonitor(api_key=api_key)
 
-    # 如果沒有 API Key，使用離線模式
+    # 沒有 API Key 時改用 FRED 公開 CSV 端點（fredgraph.csv）
     if not monitor.FRED_API_KEY:
-        print("\n⚠️  未設定 FRED_API_KEY，以下數據為示例...")
-        print("\n獲取 FRED API Key 步驟:")
-        print("  1. 訪問 https://fred.stlouisfed.org/docs/api/api_key.html")
-        print("  2. 註冊帳戶獲取免費 API Key")
-        print("  3. 設定環境變數: export FRED_API_KEY='your_key'")
-        print("  或修改本腳本 main() 中的 api_key 參數")
+        print("\nℹ️  未設定 FRED_API_KEY，改用 FRED 公開 CSV 端點抓取數據")
 
     # 生成報告
     liquidity_state, adjustment = monitor.generate_report()

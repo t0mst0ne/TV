@@ -1,21 +1,22 @@
 {
-  "timestamp": "2026-07-08 18:35:17",
+  "timestamp": "2026-07-08 19:35:04",
   "net_liquidity": {
-    "value": 2.35,
+    "value": 5.84,
     "unit": "T",
     "state": "normal",
+    "percentile": 65.0,
     "change": "+0.00",
     "threshold": {
-      "abundant": "> 2.5T",
-      "normal": "2.0-2.5T",
-      "tight": "1.5-2.0T",
-      "critical": "< 1.5T"
+      "abundant": "1年分位數 > 70%",
+      "normal": "40-70%",
+      "tight": "20-40%",
+      "critical": "< 20%"
     }
   },
   "sofr": {
-    "value": 5.1,
+    "value": 3.63,
     "unit": "%",
-    "state": "normal",
+    "state": "abundant",
     "change": "-0.00",
     "threshold": {
       "abundant": "< 4.5%",
@@ -25,9 +26,9 @@
     }
   },
   "stress_spread": {
-    "value": 25.0,
+    "value": -2.0,
     "unit": "bps",
-    "state": "tight",
+    "state": "normal",
     "change": "+0",
     "threshold": {
       "normal": "< 20 bps",
@@ -36,9 +37,9 @@
     }
   },
   "hy_spread": {
-    "value": 380.0,
+    "value": 272.0,
     "unit": "bps",
-    "state": "normal",
+    "state": "abundant",
     "change": "+0",
     "threshold": {
       "abundant": "< 350 bps",
@@ -47,15 +48,15 @@
     }
   },
   "liquidity_state": {
-    "overall": "normal",
-    "score": 66.0,
-    "label": "✓ 正常"
+    "overall": "abundant",
+    "score": 88.0,
+    "label": "✅ 充足"
   },
   "momentum_allocation": {
-    "alpha": 60,
-    "beta": 40,
+    "alpha": 70,
+    "beta": 30,
     "risk": "low",
-    "recommendation": "✓ 正常交易 (Alpha 60%)"
+    "recommendation": "✅ 維持或增加倉位 (Alpha 70%)"
   },
   "decision": null
 }

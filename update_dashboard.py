@@ -24,14 +24,30 @@ class DashboardUpdater:
         self.decisions_csv = self.project_root / 'momentum_liquidity_decisions.csv'
         self.state_file = self.project_root / 'dashboard_state.json'
 
+    REQUIRED_METRICS = ['net_liquidity', 'net_liquidity_pctl', 'sofr', 'stress_spread', 'hy_spread']
+
     def get_latest_monitoring_data(self):
-        """從 CSV 獲取最新監測數據"""
+        """從 CSV 獲取最新監測數據；缺少必要欄位視同無數據"""
         try:
             df = pd.read_csv(self.csv_path)
             if len(df) == 0:
                 return None
 
+            missing = [c for c in self.REQUIRED_METRICS if c not in df.columns]
+            if missing:
+                print(f"❌ CSV 缺少必要欄位: {missing}（請先執行 liquidity_monitor.py）")
+                return None
+
             latest = df.iloc[-1].to_dict()
+
+            # 從前一筆計算變化量
+            if len(df) >= 2:
+                prev = df.iloc[-2]
+                latest['net_liquidity_change'] = f"{latest['net_liquidity'] - prev['net_liquidity']:+.2f}"
+                latest['sofr_change'] = f"{latest['sofr'] - prev['sofr']:+.2f}"
+                latest['stress_spread_change'] = f"{latest['stress_spread'] - prev['stress_spread']:+.0f}"
+                latest['hy_spread_change'] = f"{latest['hy_spread'] - prev['hy_spread']:+.0f}"
+
             return latest
 
         except FileNotFoundError:
@@ -58,16 +74,16 @@ class DashboardUpdater:
             print(f"❌ 讀取決策 CSV 失敗: {e}")
             return None
 
-    def classify_state(self, net_liquidity, sofr, stress_spread, hy_spread):
-        """根據指標分類流動性狀態"""
+    def classify_state(self, net_liquidity_pctl, sofr, stress_spread, hy_spread):
+        """根據指標分類流動性狀態（淨流動性用一年分位數）"""
         # 淨流動性權重 40%
-        if net_liquidity > 2.5:
+        if net_liquidity_pctl > 70:
             liq_state = 'abundant'
             liq_score = 100
-        elif net_liquidity > 2.0:
+        elif net_liquidity_pctl > 40:
             liq_state = 'normal'
             liq_score = 70
-        elif net_liquidity > 1.5:
+        elif net_liquidity_pctl > 20:
             liq_state = 'tight'
             liq_score = 40
         else:
@@ -113,7 +129,7 @@ class DashboardUpdater:
         else:
             state = 'critical'
 
-        return state, total_score
+        return state, total_score, liq_state
 
     def recommend_allocation(self, state):
         """根據流動性狀態推薦倉位"""
@@ -132,22 +148,30 @@ class DashboardUpdater:
         decision = self.get_latest_decision()
 
         if monitoring is None:
-            # 使用預設數據
-            monitoring = {
+            # 不偽造數據：明確標示等待狀態，前端會顯示提示
+            print("❌ 無有效監測數據，輸出等待狀態（不使用假數據）")
+            return {
                 'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                'net_liquidity': 2.35,
-                'sofr': 5.10,
-                'stress_spread': 25,
-                'hy_spread': 380
+                'status': 'waiting',
+                'message': '⏳ 等待流動性監測數據，執行: python liquidity_monitor.py',
+                'net_liquidity': {'value': '—', 'unit': 'T', 'state': 'normal', 'change': '—'},
+                'sofr': {'value': '—', 'unit': '%', 'state': 'normal', 'change': '—'},
+                'stress_spread': {'value': '—', 'unit': 'bps', 'state': 'normal', 'change': '—'},
+                'hy_spread': {'value': '—', 'unit': 'bps', 'state': 'normal', 'change': '—'},
+                'liquidity_state': {'overall': 'normal', 'score': 0, 'label': '⏳ 等待數據'},
+                'momentum_allocation': {'alpha': '—', 'beta': '—', 'risk': 'unknown',
+                                        'recommendation': '⏳ 等待數據'},
+                'decision': None,
             }
 
         # 分類狀態
-        net_liq = float(monitoring.get('net_liquidity', 2.35))
-        sofr = float(monitoring.get('sofr', 5.10))
-        stress = float(monitoring.get('stress_spread', 25))
-        hy = float(monitoring.get('hy_spread', 380))
+        net_liq = float(monitoring['net_liquidity'])
+        net_liq_pctl = float(monitoring['net_liquidity_pctl'])
+        sofr = float(monitoring['sofr'])
+        stress = float(monitoring['stress_spread'])
+        hy = float(monitoring['hy_spread'])
 
-        state, score = self.classify_state(net_liq, sofr, stress, hy)
+        state, score, liq_state = self.classify_state(net_liq_pctl, sofr, stress, hy)
         allocation = self.recommend_allocation(state)
 
         # 建構 JSON
@@ -156,13 +180,14 @@ class DashboardUpdater:
             'net_liquidity': {
                 'value': round(net_liq, 2),
                 'unit': 'T',
-                'state': state,
+                'state': liq_state,
+                'percentile': round(net_liq_pctl, 0),
                 'change': monitoring.get('net_liquidity_change', '+0.00'),
                 'threshold': {
-                    'abundant': '> 2.5T',
-                    'normal': '2.0-2.5T',
-                    'tight': '1.5-2.0T',
-                    'critical': '< 1.5T'
+                    'abundant': '1年分位數 > 70%',
+                    'normal': '40-70%',
+                    'tight': '20-40%',
+                    'critical': '< 20%'
                 }
             },
             'sofr': {

@@ -435,7 +435,7 @@
 
         const chartConfigs = [
             // Row 1
-            { id: 'tv_netliq', symbol: 'FRED:WALCL/1000-FRED:WTREGEN-FRED:RRPONTSYD', style: '2' },
+            { id: 'tv_netliq', symbol: 'FRED:WALCL-FRED:WTREGEN-FRED:RRPONTSYD', style: '2' },
             { id: 'tv_rrp', symbol: 'FRED:RRPONTSYD', style: '3' },
             { id: 'tv_tga', symbol: 'FRED:WTREGEN', style: '3' },
 
@@ -560,6 +560,10 @@
                         <div class="metric">
                             <span class="metric-label">當前值:</span>
                             <span class="metric-value">$${data.net_liquidity.value}${data.net_liquidity.unit}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">1年分位數:</span>
+                            <span class="metric-value">${data.net_liquidity.percentile ?? '—'}%</span>
                         </div>
                         <div class="metric">
                             <span class="metric-label">變化:</span>
@@ -703,13 +707,14 @@
             `;
 
             let momentumState = 'normal';
-            if (data.momentum_alpha.allocation >= 70) momentumState = 'abundant';
-            else if (data.momentum_alpha.allocation <= 30) momentumState = 'tight';
+            const alphaVal = data.momentum_allocation?.alpha ?? data.momentum_alpha?.allocation ?? 0;
+            if (alphaVal >= 70) momentumState = 'abundant';
+            else if (alphaVal <= 30) momentumState = 'tight';
 
             html += `
                 <div class="status-item ${momentumState}">
                     <span class="status-label">🎯 Alpha</span>
-                    <span class="status-value">${data.momentum_alpha.allocation}%</span>
+                    <span class="status-value">${alphaVal}%</span>
                 </div>
             `;
 

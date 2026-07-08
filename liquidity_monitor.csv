@@ -1,2 +1,2 @@
-timestamp
-2026-07-08 18:35:17
+timestamp,net_liquidity,net_liquidity_pctl,sofr,stress_spread,hy_spread,corp_spread
+2026-07-08 19:35:04,5.839843,65.32258064516128,3.63,-2.0000000000000018,272.0,75.0
