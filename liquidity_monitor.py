@@ -71,7 +71,7 @@ class LiquidityMonitor:
             return None
 
         try:
-            url = f"https://api.stlouisfed.org/fred/series/data"
+            url = f"https://api.stlouisfed.org/fred/series/observations"
             params = {
                 'series_id': series_id,
                 'api_key': self.FRED_API_KEY,
