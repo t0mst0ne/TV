@@ -1,0 +1,61 @@
+{
+  "timestamp": "2026-07-08 18:35:17",
+  "net_liquidity": {
+    "value": 2.35,
+    "unit": "T",
+    "state": "normal",
+    "change": "+0.00",
+    "threshold": {
+      "abundant": "> 2.5T",
+      "normal": "2.0-2.5T",
+      "tight": "1.5-2.0T",
+      "critical": "< 1.5T"
+    }
+  },
+  "sofr": {
+    "value": 5.1,
+    "unit": "%",
+    "state": "normal",
+    "change": "-0.00",
+    "threshold": {
+      "abundant": "< 4.5%",
+      "normal": "4.5-5.5%",
+      "tight": "5.5-6.0%",
+      "critical": "> 6.0%"
+    }
+  },
+  "stress_spread": {
+    "value": 25.0,
+    "unit": "bps",
+    "state": "tight",
+    "change": "+0",
+    "threshold": {
+      "normal": "< 20 bps",
+      "tight": "20-50 bps",
+      "critical": "> 50 bps"
+    }
+  },
+  "hy_spread": {
+    "value": 380.0,
+    "unit": "bps",
+    "state": "normal",
+    "change": "+0",
+    "threshold": {
+      "abundant": "< 350 bps",
+      "normal": "350-450 bps",
+      "tight": "> 450 bps"
+    }
+  },
+  "liquidity_state": {
+    "overall": "normal",
+    "score": 66.0,
+    "label": "✓ 正常"
+  },
+  "momentum_allocation": {
+    "alpha": 60,
+    "beta": 40,
+    "risk": "low",
+    "recommendation": "✓ 正常交易 (Alpha 60%)"
+  },
+  "decision": null
+}
