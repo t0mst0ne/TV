@@ -530,8 +530,9 @@
                         'state': 'normal',
                         'change': '—'
                     },
-                    'momentum_alpha': {
-                        'allocation': '—',
+                    'momentum_allocation': {
+                        'alpha': '—',
+                        'beta': '—',
                         'risk': 'unknown'
                     }
                 };
@@ -618,8 +619,9 @@
 
             // Momentum 倉位建議
             let momentumState = 'normal';
-            if (data.momentum_alpha.allocation >= 70) momentumState = 'abundant';
-            else if (data.momentum_alpha.allocation <= 30) momentumState = 'tight';
+            const alphaVal = data.momentum_allocation?.alpha || data.momentum_alpha?.allocation || 0;
+            if (alphaVal >= 70) momentumState = 'abundant';
+            else if (alphaVal <= 30) momentumState = 'tight';
 
             html += `
                 <div class="monitoring-item ${momentumState}">
@@ -627,15 +629,15 @@
                     <div class="item-value">
                         <div class="metric">
                             <span class="metric-label">Alpha 倉位:</span>
-                            <span class="metric-value">${data.momentum_alpha.allocation}%</span>
+                            <span class="metric-value">${alphaVal}%</span>
                         </div>
                         <div class="metric">
                             <span class="metric-label">Beta 倉位:</span>
-                            <span class="metric-value">${100 - data.momentum_alpha.allocation}%</span>
+                            <span class="metric-value">${100 - alphaVal}%</span>
                         </div>
                         <div class="metric">
                             <span class="metric-label">風險等級:</span>
-                            <span class="metric-value">${data.momentum_alpha.risk.toUpperCase()}</span>
+                            <span class="metric-value">${(data.momentum_allocation?.risk || data.momentum_alpha?.risk || 'unknown').toUpperCase()}</span>
                         </div>
                     </div>
                 </div>
