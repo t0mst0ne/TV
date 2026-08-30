@@ -177,8 +177,16 @@
     <div class="grid-container">
 
         <div class="chart-box">
+            <div class="chart-label" style="border-color:#22ab94">1. 銀行準備金 / Bank Reserves（十億美元，<a href="https://fred.stlouisfed.org/series/WRESBAL" target="_blank" rel="noopener noreferrer">WRESBAL</a>）</div>
+            <div id="tv_reserves" class="tv-container"></div>
+        </div>
+        <div class="chart-box">
+            <div class="chart-label" style="border-color:#2962ff">2. 系統流動性（銀行與貨幣市場基金停放在 Fed 的流動性總池） / System Liquidity（<a href="https://fred.stlouisfed.org/series/WRESBAL" target="_blank" rel="noopener noreferrer">WRESBAL</a> + <a href="https://fred.stlouisfed.org/series/RRPONTSYD" target="_blank" rel="noopener noreferrer">RRPONTSYD</a>）</div>
+            <div id="tv_reserves_rrp" class="tv-container"></div>
+        </div>
+        <div class="chart-box">
             <div class="chart-label" style="border-color:#2962ff">
-                1. Net Liquidity (USD bn):
+                3. 淨流動性（Fed 資產扣除財政部現金與逆回購吸收後的市場流動性代理值） / Net Liquidity（十億美元）：
                 <a href="https://fred.stlouisfed.org/series/WALCL" target="_blank" rel="noopener noreferrer">WALCL</a>
                 − <a href="https://fred.stlouisfed.org/series/WTREGEN" target="_blank" rel="noopener noreferrer">WTREGEN</a>
                 − <a href="https://fred.stlouisfed.org/series/RRPONTSYD" target="_blank" rel="noopener noreferrer">RRPONTSYD</a>
@@ -186,62 +194,53 @@
             <div id="tv_netliq" class="tv-container"></div>
         </div>
         <div class="chart-box">
-            <div class="chart-label" style="border-color:#888">2. Reverse Repo (<a href="https://fred.stlouisfed.org/series/RRPONTSYD" target="_blank" rel="noopener noreferrer">RRPONTSYD</a>)</div>
+            <div class="chart-label" style="border-color:#888">4. 逆回購 / Reverse Repo（<a href="https://fred.stlouisfed.org/series/RRPONTSYD" target="_blank" rel="noopener noreferrer">RRPONTSYD</a>）</div>
             <div id="tv_rrp" class="tv-container"></div>
         </div>
         <div class="chart-box">
-            <div class="chart-label" style="border-color:#888">3. TGA (<a href="https://fred.stlouisfed.org/series/WTREGEN" target="_blank" rel="noopener noreferrer">WTREGEN</a>)</div>
+            <div class="chart-label" style="border-color:#888">5. 財政部一般帳戶 / TGA（<a href="https://fred.stlouisfed.org/series/WTREGEN" target="_blank" rel="noopener noreferrer">WTREGEN</a>）</div>
             <div id="tv_tga" class="tv-container"></div>
         </div>
 
         <div class="chart-box">
-            <div class="chart-label" style="border-color:#2962ff">4. SOFR (Overnight Rate)</div>
+            <div class="chart-label" style="border-color:#2962ff">6. 擔保隔夜融資利率 / SOFR</div>
             <div id="tv_sofr" class="tv-container"></div>
         </div>
         <div class="chart-box">
-            <div class="chart-label" style="border-color:#f7525f">5. Liquidity Stress Spread (SOFR-IORB)</div>
+            <div class="chart-label" style="border-color:#f7525f">7. 流動性壓力利差 / Liquidity Stress Spread（SOFR−IORB）</div>
             <div id="tv_stress" class="tv-container"></div>
         </div>
 
         <div class="chart-box">
-            <div class="chart-label" style="border-color:#d029ff">6. USD/JPY (Carry Trade)</div>
+            <div class="chart-label" style="border-color:#d029ff">8. 美元／日圓 / USD/JPY（套利交易）</div>
             <div id="tv_usdjpy" class="tv-container"></div>
         </div>
 
         <div class="chart-box">
-            <div class="chart-label" style="border-color:#f7525f">7. US 10Y Yield (Rate)</div>
+            <div class="chart-label" style="border-color:#f7525f">9. 美國 10 年期公債殖利率 / US 10Y Yield</div>
             <div id="tv_us10y" class="tv-container"></div>
         </div>
         <div class="chart-box">
-            <div class="chart-label" style="border-color:#f7525f">8. US 30Y Yield (Rate)</div>
+            <div class="chart-label" style="border-color:#f7525f">10. 美國 30 年期公債殖利率 / US 30Y Yield</div>
             <div id="tv_us30y" class="tv-container"></div>
         </div>
 
         <div class="chart-box">
-            <div class="chart-label" style="border-color:#22ab94">9. USDC Market Cap</div>
+            <div class="chart-label" style="border-color:#22ab94">11. USDC 市值 / USDC Market Cap</div>
             <div id="tv_usdc" class="tv-container"></div>
         </div>
         <div class="chart-box">
-            <div class="chart-label" style="border-color:#f7525f">10. HY Spread (Junk)</div>
+            <div class="chart-label" style="border-color:#f7525f">12. 高收益債利差 / HY Spread</div>
             <div id="tv_hy" class="tv-container"></div>
         </div>
         <div class="chart-box">
-            <div class="chart-label" style="border-color:#b2b5be">11. Corp Spread (Inv Grade)</div>
+            <div class="chart-label" style="border-color:#b2b5be">13. 投資級公司債利差 / Corp Spread</div>
             <div id="tv_corp" class="tv-container"></div>
         </div>
 
         <div class="chart-box">
-            <div class="chart-label" style="border-color:#f7931a">12. BTC / USD</div>
+            <div class="chart-label" style="border-color:#f7931a">14. 比特幣／美元 / BTC/USD</div>
             <div id="tv_btc" class="tv-container"></div>
-        </div>
-
-        <div class="chart-box">
-            <div class="chart-label" style="border-color:#22ab94">13. 銀行準備金（十億美元，<a href="https://fred.stlouisfed.org/series/WRESBAL" target="_blank" rel="noopener noreferrer">WRESBAL</a>）</div>
-            <div id="tv_reserves" class="tv-container"></div>
-        </div>
-        <div class="chart-box">
-            <div class="chart-label" style="border-color:#2962ff">14. 系統流動性（<a href="https://fred.stlouisfed.org/series/WRESBAL" target="_blank" rel="noopener noreferrer">WRESBAL</a> + <a href="https://fred.stlouisfed.org/series/RRPONTSYD" target="_blank" rel="noopener noreferrer">RRPONTSYD</a>）</div>
-            <div id="tv_reserves_rrp" class="tv-container"></div>
         </div>
 
     </div>
@@ -251,28 +250,28 @@
 
         const chartConfigs = [
             // Row 1
+            { id: 'tv_reserves', symbol: 'FRED:WRESBAL/1000', style: '2' },
+            { id: 'tv_reserves_rrp', symbol: 'FRED:WRESBAL/1000+FRED:RRPONTSYD', style: '2' },
             { id: 'tv_netliq', symbol: 'FRED:WALCL/1000-FRED:WTREGEN/1000-FRED:RRPONTSYD', style: '2' },
-            { id: 'tv_rrp', symbol: 'FRED:RRPONTSYD', style: '3' },
-            { id: 'tv_tga', symbol: 'FRED:WTREGEN', style: '3' },
 
             // Row 2
+            { id: 'tv_rrp', symbol: 'FRED:RRPONTSYD', style: '3' },
+            { id: 'tv_tga', symbol: 'FRED:WTREGEN', style: '3' },
             { id: 'tv_sofr', symbol: 'FRED:SOFR', style: '2' },
+
+            // Row 3
             { id: 'tv_stress', symbol: 'FRED:SOFR-FRED:IORB', style: '2' },
             { id: 'tv_usdjpy', symbol: 'FX:USDJPY', style: '2' }, // Carry Trade
-
-            // Row 3 (shifted)
             { id: 'tv_us10y', symbol: 'FRED:DGS10', style: '2' },
+
+            // Row 4
             { id: 'tv_us30y', symbol: 'FRED:DGS30', style: '2' },
             { id: 'tv_usdc', symbol: 'CRYPTOCAP:USDC', style: '3' },
-
-            // Row 4 (shifted)
             { id: 'tv_hy', symbol: 'FRED:BAMLH0A0HYM2', style: '2' },
-            { id: 'tv_corp', symbol: 'FRED:BAMLC0A0CM', style: '2' },
-            { id: 'tv_btc', symbol: 'COINBASE:BTCUSD', style: '1' },
 
             // Row 5
-            { id: 'tv_reserves', symbol: 'FRED:WRESBAL/1000', style: '2' },
-            { id: 'tv_reserves_rrp', symbol: 'FRED:WRESBAL/1000+FRED:RRPONTSYD', style: '2' }
+            { id: 'tv_corp', symbol: 'FRED:BAMLC0A0CM', style: '2' },
+            { id: 'tv_btc', symbol: 'COINBASE:BTCUSD', style: '1' }
         ];
 
         let currentRange = '60m';
