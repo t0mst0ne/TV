@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>US Liquidity & Carry Trade Dashboard (v10)</title>
+    <title>US Liquidity & Carry Trade Dashboard (v11)</title>
     <style>
         :root {
             --bg-color: #000000;
@@ -74,13 +74,12 @@
             font-weight: bold;
         }
 
-        /* 3x3 網格系統 */
+        /* 3 欄網格系統 */
         .grid-container {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             /* 改為 3 欄 */
-            grid-template-rows: repeat(4, 1fr);
-            /* Modified to 4 rows */
+            grid-template-rows: repeat(5, 1fr);
             height: calc(100vh - var(--header-height));
             width: 100%;
             gap: 1px;
@@ -101,13 +100,54 @@
             top: 5px;
             left: 5px;
             z-index: 10;
+            box-sizing: border-box;
+            max-width: calc(100% - 10px);
             background: rgba(0, 0, 0, 0.7);
-            padding: 3px 8px;
+            padding: 3px 26px 3px 8px;
             border-radius: 4px;
             font-size: 11px;
             color: #e0e0e0;
-            pointer-events: none;
+            cursor: zoom-in;
+            pointer-events: auto;
+            user-select: none;
             border-left: 3px solid #555;
+        }
+
+        .chart-box.is-expanded {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+        }
+
+        .chart-box.is-expanded .chart-label {
+            cursor: zoom-out;
+        }
+
+        .chart-label a {
+            color: #9db7ff;
+            pointer-events: auto;
+            text-decoration: none;
+        }
+
+        .chart-label a:hover {
+            text-decoration: underline;
+        }
+
+        .chart-formula {
+            margin-top: 2px;
+            color: #b2b5be;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 10px;
+            line-height: 1.25;
+            overflow-wrap: anywhere;
+        }
+
+        .expand-hint {
+            position: absolute;
+            top: 3px;
+            right: 7px;
+            color: #b2b5be;
+            font-size: 13px;
         }
 
         .tv-container {
@@ -122,7 +162,7 @@
 
     <div class="top-bar">
         <div class="title-group">
-            <h1>Global Liquidity & Risk Matrix (3x3)</h1>
+            <h1>Global Liquidity & Risk Matrix (3 Columns)</h1>
         </div>
         <div class="time-controls">
             <button class="time-btn" onclick="syncCharts('1m')">1M</button>
@@ -137,15 +177,20 @@
     <div class="grid-container">
 
         <div class="chart-box">
-            <div class="chart-label" style="border-color:#2962ff">1. Net Liquidity (Fed-TGA-RRP)</div>
+            <div class="chart-label" style="border-color:#2962ff">
+                1. Net Liquidity (USD bn):
+                <a href="https://fred.stlouisfed.org/series/WALCL" target="_blank" rel="noopener noreferrer">WALCL</a>
+                − <a href="https://fred.stlouisfed.org/series/WTREGEN" target="_blank" rel="noopener noreferrer">WTREGEN</a>
+                − <a href="https://fred.stlouisfed.org/series/RRPONTSYD" target="_blank" rel="noopener noreferrer">RRPONTSYD</a>
+            </div>
             <div id="tv_netliq" class="tv-container"></div>
         </div>
         <div class="chart-box">
-            <div class="chart-label" style="border-color:#888">2. Reverse Repo (RRP)</div>
+            <div class="chart-label" style="border-color:#888">2. Reverse Repo (<a href="https://fred.stlouisfed.org/series/RRPONTSYD" target="_blank" rel="noopener noreferrer">RRPONTSYD</a>)</div>
             <div id="tv_rrp" class="tv-container"></div>
         </div>
         <div class="chart-box">
-            <div class="chart-label" style="border-color:#888">3. TGA (Treasury Account)</div>
+            <div class="chart-label" style="border-color:#888">3. TGA (<a href="https://fred.stlouisfed.org/series/WTREGEN" target="_blank" rel="noopener noreferrer">WTREGEN</a>)</div>
             <div id="tv_tga" class="tv-container"></div>
         </div>
 
@@ -190,7 +235,14 @@
             <div id="tv_btc" class="tv-container"></div>
         </div>
 
-
+        <div class="chart-box">
+            <div class="chart-label" style="border-color:#22ab94">13. 銀行準備金（十億美元，<a href="https://fred.stlouisfed.org/series/WRESBAL" target="_blank" rel="noopener noreferrer">WRESBAL</a>）</div>
+            <div id="tv_reserves" class="tv-container"></div>
+        </div>
+        <div class="chart-box">
+            <div class="chart-label" style="border-color:#2962ff">14. 系統流動性（<a href="https://fred.stlouisfed.org/series/WRESBAL" target="_blank" rel="noopener noreferrer">WRESBAL</a> + <a href="https://fred.stlouisfed.org/series/RRPONTSYD" target="_blank" rel="noopener noreferrer">RRPONTSYD</a>）</div>
+            <div id="tv_reserves_rrp" class="tv-container"></div>
+        </div>
 
     </div>
 
@@ -199,7 +251,7 @@
 
         const chartConfigs = [
             // Row 1
-            { id: 'tv_netliq', symbol: 'FRED:WALCL/1000-FRED:WTREGEN-FRED:RRPONTSYD', style: '2' },
+            { id: 'tv_netliq', symbol: 'FRED:WALCL/1000-FRED:WTREGEN/1000-FRED:RRPONTSYD', style: '2' },
             { id: 'tv_rrp', symbol: 'FRED:RRPONTSYD', style: '3' },
             { id: 'tv_tga', symbol: 'FRED:WTREGEN', style: '3' },
 
@@ -216,10 +268,51 @@
             // Row 4 (shifted)
             { id: 'tv_hy', symbol: 'FRED:BAMLH0A0HYM2', style: '2' },
             { id: 'tv_corp', symbol: 'FRED:BAMLC0A0CM', style: '2' },
-            { id: 'tv_btc', symbol: 'COINBASE:BTCUSD', style: '1' }
+            { id: 'tv_btc', symbol: 'COINBASE:BTCUSD', style: '1' },
+
+            // Row 5
+            { id: 'tv_reserves', symbol: 'FRED:WRESBAL/1000', style: '2' },
+            { id: 'tv_reserves_rrp', symbol: 'FRED:WRESBAL/1000+FRED:RRPONTSYD', style: '2' }
         ];
 
         let currentRange = '60m';
+
+        function toggleChartExpansion(chartBox) {
+            const shouldExpand = !chartBox.classList.contains('is-expanded');
+            document.querySelector('.chart-box.is-expanded')?.classList.remove('is-expanded');
+            if (shouldExpand) chartBox.classList.add('is-expanded');
+
+            requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
+        }
+
+        function addChartAnnotations() {
+            chartConfigs.forEach(config => {
+                const container = document.getElementById(config.id);
+                const label = container.closest('.chart-box').querySelector('.chart-label');
+                const annotation = document.createElement('div');
+                const expandHint = document.createElement('span');
+
+                annotation.className = 'chart-formula';
+                annotation.textContent = config.symbol;
+                expandHint.className = 'expand-hint';
+                expandHint.textContent = '⛶';
+                expandHint.setAttribute('aria-hidden', 'true');
+
+                label.appendChild(annotation);
+                label.appendChild(expandHint);
+                label.title = '雙擊放大／還原圖表';
+                label.addEventListener('dblclick', event => {
+                    if (event.target.closest('a')) return;
+                    toggleChartExpansion(container.closest('.chart-box'));
+                });
+            });
+
+            document.addEventListener('keydown', event => {
+                if (event.key !== 'Escape') return;
+                const expandedChart = document.querySelector('.chart-box.is-expanded');
+                if (expandedChart) toggleChartExpansion(expandedChart);
+            });
+        }
 
         function syncCharts(range) {
             currentRange = range;
@@ -250,6 +343,7 @@
         }
 
         window.onload = function () {
+            addChartAnnotations();
             syncCharts('60m');
         };
 
