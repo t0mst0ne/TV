@@ -177,7 +177,7 @@
     <div class="grid-container">
 
         <div class="chart-box">
-            <div class="chart-label" style="border-color:#22ab94">1. 銀行準備金 / Bank Reserves（十億美元，<a href="https://fred.stlouisfed.org/series/WRESBAL" target="_blank" rel="noopener noreferrer">WRESBAL</a>）</div>
+            <div class="chart-label" style="border-color:#22ab94">1. 銀行準備金 / Bank Reserves（<a href="https://fred.stlouisfed.org/series/WRESBAL" target="_blank" rel="noopener noreferrer">WRESBAL</a>）</div>
             <div id="tv_reserves" class="tv-container"></div>
         </div>
         <div class="chart-box">
@@ -186,7 +186,7 @@
         </div>
         <div class="chart-box">
             <div class="chart-label" style="border-color:#2962ff">
-                3. 淨流動性（Fed 資產扣除財政部現金與逆回購吸收後的市場流動性代理值） / Net Liquidity（十億美元）：
+                3. 淨流動性（Fed 資產扣除財政部現金與逆回購吸收後的市場流動性代理值） / Net Liquidity：
                 <a href="https://fred.stlouisfed.org/series/WALCL" target="_blank" rel="noopener noreferrer">WALCL</a>
                 − <a href="https://fred.stlouisfed.org/series/WTREGEN" target="_blank" rel="noopener noreferrer">WTREGEN</a>
                 − <a href="https://fred.stlouisfed.org/series/RRPONTSYD" target="_blank" rel="noopener noreferrer">RRPONTSYD</a>
@@ -250,9 +250,9 @@
 
         const chartConfigs = [
             // Row 1
-            { id: 'tv_reserves', symbol: 'FRED:WRESBAL/1000', style: '2' },
-            { id: 'tv_reserves_rrp', symbol: 'FRED:WRESBAL/1000+FRED:RRPONTSYD', style: '2' },
-            { id: 'tv_netliq', symbol: 'FRED:WALCL/1000-FRED:WTREGEN/1000-FRED:RRPONTSYD', style: '2' },
+            { id: 'tv_reserves', symbol: 'FRED:WRESBAL', style: '2' },
+            { id: 'tv_reserves_rrp', symbol: 'FRED:WRESBAL+FRED:RRPONTSYD', style: '2' },
+            { id: 'tv_netliq', symbol: 'FRED:WALCL-FRED:WTREGEN-FRED:RRPONTSYD', style: '2' },
 
             // Row 2
             { id: 'tv_rrp', symbol: 'FRED:RRPONTSYD', style: '3' },
