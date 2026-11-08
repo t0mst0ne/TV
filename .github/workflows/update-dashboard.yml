@@ -16,16 +16,16 @@ jobs:
     steps:
       # 1. 檢出倉庫 (tradingview-dashboard)
       - name: Checkout Dashboard Repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: dashboard
 
 
       # 3. 設定 Python 環境
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
-          python-version: '3.9'
+          python-version: '3.12'
 
       # 4. 安裝依賴
       - name: Install Dependencies
